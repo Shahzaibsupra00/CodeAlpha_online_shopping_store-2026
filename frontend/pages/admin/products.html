@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Products — Admin — ShopVerse</title>
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+  <header class="header"><div class="container"><a href="/" class="logo">ShopVerse</a><nav class="nav-links" id="nav-links"><a href="/">Home</a><a href="/pages/products.html">Products</a></nav><div class="nav-icons"><button class="nav-icon theme-toggle" id="theme-toggle">🌙</button><div id="auth-nav" style="display:none;"></div><div class="user-menu" id="user-nav" style="display:none;"><button class="user-menu-btn" id="user-menu-btn">👤 <span id="user-name">Admin</span> ▾</button><div class="user-dropdown" id="user-dropdown"><a href="/pages/profile.html">👤 My Profile</a><a href="/pages/admin/dashboard.html" id="admin-link">⚙️ Admin Panel</a><div class="divider"></div><button id="logout-btn">🚪 Logout</button></div></div></div></div></header>
+
+  <main class="admin-page">
+    <div class="container">
+      <div class="admin-layout">
+        <aside class="admin-sidebar">
+          <h3>Admin Panel</h3>
+          <nav class="admin-nav">
+            <a href="/pages/admin/dashboard.html"><span class="icon">📊</span> Dashboard</a>
+            <a href="/pages/admin/products.html" class="active"><span class="icon">📦</span> Products</a>
+            <a href="/pages/admin/users.html"><span class="icon">👥</span> Users</a>
+            <a href="/pages/admin/orders.html"><span class="icon">🛒</span> Orders</a>
+          </nav>
+        </aside>
+
+        <div class="admin-content">
+          <div class="admin-content-header">
+            <h1>Products</h1>
+            <button class="btn btn-primary" id="add-product-btn">+ Add Product</button>
+          </div>
+
+          <div class="admin-table-container">
+            <div class="admin-table-toolbar">
+              <div class="admin-table-search">
+                <input type="text" id="product-search" placeholder="🔍 Search products...">
+              </div>
+            </div>
+            <div id="products-table">
+              <div class="page-loader"><div class="spinner"></div><p>Loading...</p></div>
+            </div>
+          </div>
+          <div id="products-pagination" class="mt-lg"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Product Modal -->
+  <div class="modal-overlay" id="product-modal">
+    <div class="modal" style="max-width:650px;">
+      <div class="modal-header">
+        <h3 id="modal-title">Add Product</h3>
+        <button class="modal-close" id="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="product-form">
+          <div class="form-group"><label class="form-label">Title *</label><input type="text" class="form-input" id="p-title" required></div>
+          <div class="form-group"><label class="form-label">Description *</label><textarea class="form-textarea" id="p-description" required></textarea></div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Price *</label><input type="number" class="form-input" id="p-price" step="0.01" min="0" required></div>
+            <div class="form-group"><label class="form-label">Stock *</label><input type="number" class="form-input" id="p-stock" min="0" required></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Category *</label><select class="form-select" id="p-category" required><option value="">Select category</option></select></div>
+            <div class="form-group"><label class="form-label">Rating</label><input type="number" class="form-input" id="p-rating" min="0" max="5" step="0.1" value="0"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-check"><input type="checkbox" id="p-featured"><span>Featured Product</span></label>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Images</label>
+            <input type="file" id="p-images" multiple accept="image/*">
+          </div>
+          <input type="hidden" id="p-id">
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="modal-cancel">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="modal-submit">Save Product</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/js/main.js"></script>
+  <script type="module">
+    import { adminGetProducts, adminCreateProduct, adminUpdateProduct, adminDeleteProduct, adminGetCategories } from '/js/admin/admin.js';
+    import { isAdmin } from '/js/auth/auth.js';
+    import { formatPrice, getImageUrl, debounce, renderPagination } from '/js/utils/helpers.js';
+    import { showToast } from '/js/utils/toast.js';
+    import { confirmDialog } from '/js/utils/modal.js';
+    import { setButtonLoading } from '/js/utils/loader.js';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!isAdmin()) { window.location.href = '/'; return; }
+
+      const tableEl = document.getElementById('products-table');
+      const paginationEl = document.getElementById('products-pagination');
+      const modal = document.getElementById('product-modal');
+      let categories = [];
+      let currentPage = 1;
+      let searchQuery = '';
+
+      // Load categories for select
+      try {
+        const catData = await adminGetCategories();
+        categories = catData.data || [];
+        const select = document.getElementById('p-category');
+        categories.forEach((c) => {
+          const opt = document.createElement('option');
+          opt.value = c._id; opt.textContent = c.name;
+          select.appendChild(opt);
+        });
+      } catch {}
+
+      const loadProducts = async () => {
+        try {
+          const data = await adminGetProducts({ page: currentPage, search: searchQuery, limit: 10 });
+          const products = data.data;
+
+          if (!products || products.length === 0) {
+            tableEl.innerHTML = '<p class="text-center text-muted p-xl">No products found</p>';
+            paginationEl.innerHTML = '';
+            return;
+          }
+
+          tableEl.innerHTML = `
+            <table class="admin-table">
+              <thead><tr><th>Product</th><th>Price</th><th>Stock</th><th>Category</th><th>Featured</th><th>Actions</th></tr></thead>
+              <tbody>
+                ${products.map((p) => `
+                  <tr>
+                    <td><div class="product-cell"><div class="product-thumb">${p.images?.[0] ? `<img src="${getImageUrl(p.images[0])}" alt="">` : '📦'}</div><span>${p.title.substring(0, 40)}</span></div></td>
+                    <td>${formatPrice(p.price)}</td>
+                    <td>${p.stock}</td>
+                    <td>${p.category?.name || 'N/A'}</td>
+                    <td>${p.featured ? '⭐' : '—'}</td>
+                    <td class="actions">
+                      <button class="edit-btn" data-id="${p._id}" title="Edit">✏️</button>
+                      <button class="delete-btn" data-id="${p._id}" title="Delete">🗑️</button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          `;
+
+          paginationEl.innerHTML = data.pagination ? renderPagination(data.pagination) : '';
+
+          // Edit buttons
+          tableEl.querySelectorAll('.edit-btn').forEach((btn) => {
+            btn.addEventListener('click', async () => {
+              const id = btn.dataset.id;
+              try {
+                const res = await adminGetProducts({ page: 1, limit: 100 });
+                const product = res.data.find((p) => p._id === id);
+                if (product) openModal(product);
+              } catch {}
+            });
+          });
+
+          // Delete buttons
+          tableEl.querySelectorAll('.delete-btn').forEach((btn) => {
+            btn.addEventListener('click', async () => {
+              const ok = await confirmDialog('Delete this product?');
+              if (ok) {
+                try {
+                  await adminDeleteProduct(btn.dataset.id);
+                  showToast('Product deleted', 'success');
+                  loadProducts();
+                } catch (err) { showToast(err.message || 'Delete failed', 'error'); }
+              }
+            });
+          });
+
+          // Pagination
+          paginationEl.querySelectorAll('.pagination-btn').forEach((btn) => {
+            btn.addEventListener('click', () => {
+              if (btn.dataset.page) { currentPage = parseInt(btn.dataset.page); loadProducts(); }
+            });
+          });
+        } catch { tableEl.innerHTML = '<p class="text-center text-muted">Failed to load products</p>'; }
+      };
+
+      // Search
+      document.getElementById('product-search').addEventListener('input', debounce((e) => {
+        searchQuery = e.target.value; currentPage = 1; loadProducts();
+      }, 400));
+
+      // Modal
+      const openModal = (product = null) => {
+        document.getElementById('modal-title').textContent = product ? 'Edit Product' : 'Add Product';
+        document.getElementById('p-id').value = product?._id || '';
+        document.getElementById('p-title').value = product?.title || '';
+        document.getElementById('p-description').value = product?.description || '';
+        document.getElementById('p-price').value = product?.price || '';
+        document.getElementById('p-stock').value = product?.stock ?? '';
+        document.getElementById('p-category').value = product?.category?._id || product?.category || '';
+        document.getElementById('p-rating').value = product?.rating || 0;
+        document.getElementById('p-featured').checked = product?.featured || false;
+        modal.classList.add('active');
+        document.body.classList.add('no-scroll');
+      };
+
+      const closeModal = () => {
+        modal.classList.remove('active');
+        document.body.classList.remove('no-scroll');
+        document.getElementById('product-form').reset();
+      };
+
+      document.getElementById('add-product-btn').addEventListener('click', () => openModal());
+      document.getElementById('modal-close').addEventListener('click', closeModal);
+      document.getElementById('modal-cancel').addEventListener('click', closeModal);
+      modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+      // Form submit
+      document.getElementById('product-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('modal-submit');
+        setButtonLoading(btn, true);
+
+        const id = document.getElementById('p-id').value;
+        const formData = new FormData();
+        formData.append('title', document.getElementById('p-title').value);
+        formData.append('description', document.getElementById('p-description').value);
+        formData.append('price', document.getElementById('p-price').value);
+        formData.append('stock', document.getElementById('p-stock').value);
+        formData.append('category', document.getElementById('p-category').value);
+        formData.append('rating', document.getElementById('p-rating').value);
+        formData.append('featured', document.getElementById('p-featured').checked);
+
+        const files = document.getElementById('p-images').files;
+        for (let i = 0; i < files.length; i++) formData.append('images', files[i]);
+
+        try {
+          if (id) {
+            await adminUpdateProduct(id, formData);
+            showToast('Product updated!', 'success');
+          } else {
+            await adminCreateProduct(formData);
+            showToast('Product created!', 'success');
+          }
+          closeModal();
+          loadProducts();
+        } catch (err) { showToast(err.message || 'Save failed', 'error'); }
+        finally { setButtonLoading(btn, false); }
+      });
+
+      loadProducts();
+    });
+  </script>
+</body>
+</html>

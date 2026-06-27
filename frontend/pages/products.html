@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Browse our complete collection of products with filters, search, and sorting.">
+  <title>Products — ShopVerse</title>
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <a href="/" class="logo">ShopVerse</a>
+      <nav class="nav-links" id="nav-links">
+        <a href="/">Home</a>
+        <a href="/pages/products.html" class="active">Products</a>
+        <a href="/pages/cart.html">Cart</a>
+      </nav>
+      <div class="nav-icons">
+        <button class="nav-icon theme-toggle" id="theme-toggle">🌙</button>
+        <a href="/pages/cart.html" class="nav-icon">🛒<span class="badge" id="cart-count" style="display:none;">0</span></a>
+        <div id="auth-nav" style="display:flex;gap:0.5rem;">
+          <a href="/pages/login.html" class="btn btn-outline btn-sm">Login</a>
+          <a href="/pages/register.html" class="btn btn-primary btn-sm">Register</a>
+        </div>
+        <div class="user-menu" id="user-nav" style="display:none;">
+          <button class="user-menu-btn" id="user-menu-btn">👤 <span id="user-name">User</span> ▾</button>
+          <div class="user-dropdown" id="user-dropdown">
+            <a href="/pages/profile.html">👤 My Profile</a>
+            <a href="/pages/orders.html">📦 My Orders</a>
+            <a href="/pages/admin/dashboard.html" id="admin-link" style="display:none;">⚙️ Admin Panel</a>
+            <div class="divider"></div>
+            <button id="logout-btn">🚪 Logout</button>
+          </div>
+        </div>
+        <button class="mobile-menu-btn" id="mobile-menu-btn"><span></span><span></span><span></span></button>
+      </div>
+    </div>
+  </header>
+
+  <main class="products-page">
+    <div class="page-header">
+      <div class="container">
+        <h1>Our Products</h1>
+        <p>Discover our amazing collection</p>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="page-layout">
+        <!-- Sidebar Filters -->
+        <aside class="filters-sidebar" id="filters-sidebar">
+          <div class="filter-section">
+            <h4>Search</h4>
+            <input type="text" class="form-input" id="search-input" placeholder="Search products...">
+          </div>
+          <div class="filter-section">
+            <h4>Categories</h4>
+            <div id="category-filters">
+              <div class="filter-option active" data-category="">All Categories</div>
+            </div>
+          </div>
+          <div class="filter-section">
+            <h4>Price Range</h4>
+            <div class="price-range">
+              <input type="number" id="min-price" placeholder="Min" min="0">
+              <span>—</span>
+              <input type="number" id="max-price" placeholder="Max" min="0">
+            </div>
+            <button class="btn btn-secondary btn-sm btn-block mt-md" id="apply-price">Apply</button>
+          </div>
+          <div class="filter-section">
+            <h4>Availability</h4>
+            <label class="form-check">
+              <input type="checkbox" id="in-stock-filter">
+              <span>In Stock Only</span>
+            </label>
+          </div>
+          <button class="btn btn-outline btn-sm btn-block" id="clear-filters">Clear Filters</button>
+        </aside>
+
+        <!-- Products Content -->
+        <div>
+          <div class="products-toolbar">
+            <span class="results-count" id="results-count">Loading products...</span>
+            <div style="display:flex;gap:1rem;align-items:center;">
+              <button class="btn btn-secondary btn-sm mobile-filter-btn" id="mobile-filter-btn">☰ Filters</button>
+              <select class="sort-select" id="sort-select">
+                <option value="">Sort by: Default</option>
+                <option value="price_low">Price: Low to High</option>
+                <option value="price_high">Price: High to Low</option>
+                <option value="name_az">Name: A-Z</option>
+                <option value="name_za">Name: Z-A</option>
+                <option value="rating">Rating</option>
+                <option value="newest">Newest</option>
+              </select>
+            </div>
+          </div>
+          <div id="products-container"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <span>© 2025 ShopVerse. All rights reserved.</span>
+        <span>Made with ❤️</span>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="/js/main.js"></script>
+  <script type="module">
+    import { fetchProducts, fetchCategories, renderProductGrid } from '/js/product/product.js';
+    import { showSkeletonGrid } from '/js/utils/loader.js';
+    import { debounce, getQueryParam } from '/js/utils/helpers.js';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const container = document.getElementById('products-container');
+      const resultsCount = document.getElementById('results-count');
+      const searchInput = document.getElementById('search-input');
+      const sortSelect = document.getElementById('sort-select');
+      const categoryFilters = document.getElementById('category-filters');
+
+      let currentParams = {
+        page: getQueryParam('page') || 1,
+        search: getQueryParam('search') || '',
+        category: getQueryParam('category') || '',
+        sort: getQueryParam('sort') || '',
+        minPrice: '',
+        maxPrice: '',
+        inStock: '',
+      };
+
+      if (currentParams.search) searchInput.value = currentParams.search;
+      if (currentParams.sort) sortSelect.value = currentParams.sort;
+
+      // Load categories
+      try {
+        const catData = await fetchCategories();
+        if (catData.data) {
+          catData.data.forEach((cat) => {
+            const div = document.createElement('div');
+            div.className = `filter-option ${currentParams.category === cat._id ? 'active' : ''}`;
+            div.dataset.category = cat._id;
+            div.textContent = cat.name;
+            categoryFilters.appendChild(div);
+          });
+
+          categoryFilters.addEventListener('click', (e) => {
+            const option = e.target.closest('.filter-option');
+            if (!option) return;
+            categoryFilters.querySelectorAll('.filter-option').forEach((o) => o.classList.remove('active'));
+            option.classList.add('active');
+            currentParams.category = option.dataset.category;
+            currentParams.page = 1;
+            loadProducts();
+          });
+        }
+      } catch {}
+
+      // Load products
+      const loadProducts = async () => {
+        showSkeletonGrid(container, 8);
+        try {
+          const params = {};
+          if (currentParams.page) params.page = currentParams.page;
+          if (currentParams.search) params.search = currentParams.search;
+          if (currentParams.category) params.category = currentParams.category;
+          if (currentParams.sort) params.sort = currentParams.sort;
+          if (currentParams.minPrice) params.minPrice = currentParams.minPrice;
+          if (currentParams.maxPrice) params.maxPrice = currentParams.maxPrice;
+          if (currentParams.inStock) params.inStock = 'true';
+
+          const data = await fetchProducts(params);
+          resultsCount.textContent = `Showing ${data.data.length} of ${data.pagination.total} products`;
+          renderProductGrid(container, data.data, data.pagination);
+
+          // Pagination clicks
+          container.querySelectorAll('.pagination-btn').forEach((btn) => {
+            btn.addEventListener('click', () => {
+              const page = btn.dataset.page;
+              if (page) {
+                currentParams.page = parseInt(page);
+                loadProducts();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }
+            });
+          });
+        } catch {
+          container.innerHTML = '<p class="text-center text-muted p-xl">Failed to load products</p>';
+        }
+      };
+
+      // Search
+      searchInput.addEventListener('input', debounce(() => {
+        currentParams.search = searchInput.value.trim();
+        currentParams.page = 1;
+        loadProducts();
+      }, 400));
+
+      // Sort
+      sortSelect.addEventListener('change', () => {
+        currentParams.sort = sortSelect.value;
+        currentParams.page = 1;
+        loadProducts();
+      });
+
+      // Price filter
+      document.getElementById('apply-price')?.addEventListener('click', () => {
+        currentParams.minPrice = document.getElementById('min-price').value;
+        currentParams.maxPrice = document.getElementById('max-price').value;
+        currentParams.page = 1;
+        loadProducts();
+      });
+
+      // Stock filter
+      document.getElementById('in-stock-filter')?.addEventListener('change', (e) => {
+        currentParams.inStock = e.target.checked ? 'true' : '';
+        currentParams.page = 1;
+        loadProducts();
+      });
+
+      // Clear filters
+      document.getElementById('clear-filters')?.addEventListener('click', () => {
+        currentParams = { page: 1, search: '', category: '', sort: '', minPrice: '', maxPrice: '', inStock: '' };
+        searchInput.value = '';
+        sortSelect.value = '';
+        document.getElementById('min-price').value = '';
+        document.getElementById('max-price').value = '';
+        document.getElementById('in-stock-filter').checked = false;
+        categoryFilters.querySelectorAll('.filter-option').forEach((o) => o.classList.remove('active'));
+        categoryFilters.querySelector('[data-category=""]')?.classList.add('active');
+        loadProducts();
+      });
+
+      // Mobile filter toggle
+      document.getElementById('mobile-filter-btn')?.addEventListener('click', () => {
+        document.getElementById('filters-sidebar')?.classList.toggle('active');
+      });
+
+      loadProducts();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ShopVerse — Premium online shopping experience with the latest products at best prices.">
+  <title>ShopVerse — Premium E-Commerce Store</title>
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="container">
+      <a href="/" class="logo">ShopVerse</a>
+
+      <div class="header-search">
+        <input type="text" id="hero-search-input" placeholder="Search products..." autocomplete="off">
+        <button id="hero-search-btn">🔍</button>
+      </div>
+
+      <nav class="nav-links" id="nav-links">
+        <a href="/">Home</a>
+        <a href="/pages/products.html">Products</a>
+        <a href="/pages/cart.html">Cart</a>
+      </nav>
+
+      <div class="nav-icons">
+        <button class="nav-icon theme-toggle" id="theme-toggle" title="Toggle theme">🌙</button>
+
+        <a href="/pages/cart.html" class="nav-icon" title="Cart">
+          🛒
+          <span class="badge" id="cart-count" style="display:none;">0</span>
+        </a>
+
+        <!-- Auth Nav (logged out) -->
+        <div id="auth-nav" style="display:flex; gap:0.5rem;">
+          <a href="/pages/login.html" class="btn btn-outline btn-sm">Login</a>
+          <a href="/pages/register.html" class="btn btn-primary btn-sm">Register</a>
+        </div>
+
+        <!-- User Nav (logged in) -->
+        <div class="user-menu" id="user-nav" style="display:none;">
+          <button class="user-menu-btn" id="user-menu-btn">
+            👤 <span id="user-name">User</span> ▾
+          </button>
+          <div class="user-dropdown" id="user-dropdown">
+            <a href="/pages/profile.html">👤 My Profile</a>
+            <a href="/pages/orders.html">📦 My Orders</a>
+            <a href="#" id="admin-link" style="display:none;">⚙️ Admin Panel</a>
+            <div class="divider"></div>
+            <button id="logout-btn">🚪 Logout</button>
+          </div>
+        </div>
+
+        <button class="mobile-menu-btn" id="mobile-menu-btn">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-content">
+        <div class="hero-badge">🔥 New Season Collection 2025</div>
+        <h1 class="hero-title">Discover Your Style</h1>
+        <p class="hero-text">
+          Shop the latest trends with premium quality products. Enjoy free shipping on orders over $50 and exclusive deals just for you.
+        </p>
+        <div class="hero-buttons">
+          <a href="/pages/products.html" class="btn btn-white">Shop Now →</a>
+          <a href="#categories" class="btn btn-ghost">Browse Categories</a>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <div class="hero-stat-number">10K+</div>
+            <div class="hero-stat-label">Products</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-number">50K+</div>
+            <div class="hero-stat-label">Customers</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-number">4.9</div>
+            <div class="hero-stat-label">Rating</div>
+          </div>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="hero-slider" id="hero-slider">
+          <div class="hero-slider-track" id="slider-track">
+            <div class="hero-slider-slide"><img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=600&q=80" alt="New Season Collection"></div>
+            <div class="hero-slider-slide"><img src="https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=600&q=80" alt="Premium Footwear"></div>
+            <div class="hero-slider-slide"><img src="https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?auto=format&fit=crop&w=600&q=80" alt="Elegant Watches"></div>
+            <div class="hero-slider-slide"><img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=600&q=80" alt="Latest Smartphones"></div>
+          </div>
+          <div class="hero-slider-dots" id="slider-dots"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Categories Section -->
+  <section class="section" id="categories">
+    <div class="container">
+      <h2 class="section-title">Shop by Category</h2>
+      <p class="section-subtitle">Find exactly what you're looking for</p>
+      <div class="categories-grid" id="categories-grid">
+        <!-- Loaded dynamically -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Products -->
+  <section class="section">
+    <div class="container">
+      <h2 class="section-title">Featured Products</h2>
+      <p class="section-subtitle">Handpicked selections for you</p>
+      <div id="featured-products">
+        <!-- Loaded dynamically -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Promo Banner -->
+  <section class="section">
+    <div class="container">
+      <div class="promo-banner">
+        <div>
+          <h3>Summer Sale — Up to 50% Off</h3>
+          <p>Don't miss out on our biggest sale of the season. Limited time offer!</p>
+          <a href="/pages/products.html" class="btn btn-primary">Shop the Sale →</a>
+        </div>
+        <div class="promo-banner-icon" style="color: white; opacity: 0.95;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Latest Products -->
+  <section class="section">
+    <div class="container">
+      <h2 class="section-title">Latest Arrivals</h2>
+      <p class="section-subtitle">Fresh additions to our collection</p>
+      <div id="latest-products">
+        <!-- Loaded dynamically -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="logo">ShopVerse</div>
+          <p>Your premium online shopping destination. Quality products, fast delivery, and excellent customer service.</p>
+          <div class="footer-social">
+            <a href="#" title="Facebook">📘</a>
+            <a href="#" title="Twitter">🐦</a>
+            <a href="#" title="Instagram">📷</a>
+          </div>
+        </div>
+        <div class="footer-col">
+          <h4>Quick Links</h4>
+          <a href="/">Home</a>
+          <a href="/pages/products.html">Products</a>
+          <a href="/pages/cart.html">Cart</a>
+          <a href="/pages/profile.html">My Account</a>
+        </div>
+        <div class="footer-col">
+          <h4>Support</h4>
+          <a href="#">FAQ</a>
+          <a href="#">Shipping Info</a>
+          <a href="#">Returns</a>
+          <a href="#">Contact Us</a>
+        </div>
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms of Service</a>
+          <a href="#">Cookie Policy</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2025 ShopVerse. All rights reserved.</span>
+        <span>Made with ❤️</span>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="/js/main.js"></script>
+  <script type="module">
+    import { fetchFeaturedProducts, fetchLatestProducts, fetchCategories, renderProductGrid, attachProductCardEvents } from '/js/product/product.js';
+    import { showSkeletonGrid } from '/js/utils/loader.js';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Hero Slider
+      const slides = document.querySelectorAll('.hero-slider-slide');
+      const track = document.getElementById('slider-track');
+      const dotsContainer = document.getElementById('slider-dots');
+      let currentSlide = 0;
+
+      if (slides.length > 0 && dotsContainer) {
+        slides.forEach((_, i) => {
+          const dot = document.createElement('div');
+          dot.className = `hero-slider-dot ${i === 0 ? 'active' : ''}`;
+          dot.addEventListener('click', () => goToSlide(i));
+          dotsContainer.appendChild(dot);
+        });
+
+        const goToSlide = (index) => {
+          currentSlide = index;
+          track.style.transform = `translateX(-${index * 100}%)`;
+          dotsContainer.querySelectorAll('.hero-slider-dot').forEach((d, i) => {
+            d.classList.toggle('active', i === index);
+          });
+        };
+
+        setInterval(() => {
+          currentSlide = (currentSlide + 1) % slides.length;
+          goToSlide(currentSlide);
+        }, 3000);
+      }
+
+      // Load categories
+      try {
+        const catData = await fetchCategories();
+        const grid = document.getElementById('categories-grid');
+        const icons = [
+          // Electronics (device)
+          `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`,
+          // Fashion (shirt)
+          `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 3.46L16 1.73a2 2 0 0 0-1.57 0L10.05 3.46a2 2 0 0 1-1.33 0L4.34 1.73a2 2 0 0 0-1.57 0L.38 3.46A2 2 0 0 0 0 5.17v12a2 2 0 0 0 1.25 1.86l8 3.2a2 2 0 0 0 1.5 0l8-3.2A2 2 0 0 0 20 17.17v-12a2 2 0 0 0-.38-1.71z"/></svg>`,
+          // Home & Kitchen (home)
+          `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
+          // Sports & Outdoors (activity)
+          `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
+          // Books (book-open)
+          `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>`,
+          // Health & Beauty (heart)
+          `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`
+        ];
+        if (grid && catData.data) {
+          grid.innerHTML = catData.data.map((cat, i) => `
+            <a href="/pages/products.html?category=${cat._id}" class="category-card">
+              <div class="category-card-icon" style="display: flex; align-items: center; justify-content: center; color: var(--color-primary);">${icons[i % icons.length]}</div>
+              <div class="category-card-name">${cat.name}</div>
+            </a>
+          `).join('');
+        }
+      } catch (e) { console.log('Categories load error:', e); }
+
+      // Load featured products
+      const featuredEl = document.getElementById('featured-products');
+      if (featuredEl) {
+        showSkeletonGrid(featuredEl, 4);
+        try {
+          const data = await fetchFeaturedProducts();
+          renderProductGrid(featuredEl, data.data);
+        } catch { featuredEl.innerHTML = '<p class="text-center text-muted">Failed to load products</p>'; }
+      }
+
+      // Load latest products
+      const latestEl = document.getElementById('latest-products');
+      if (latestEl) {
+        showSkeletonGrid(latestEl, 4);
+        try {
+          const data = await fetchLatestProducts();
+          renderProductGrid(latestEl, data.data);
+        } catch { latestEl.innerHTML = '<p class="text-center text-muted">Failed to load products</p>'; }
+      }
+
+      // Search bar
+      const searchInput = document.getElementById('hero-search-input');
+      const searchBtn = document.getElementById('hero-search-btn');
+      const doSearch = () => {
+        const q = searchInput?.value?.trim();
+        if (q) window.location.href = `/pages/products.html?search=${encodeURIComponent(q)}`;
+      };
+      searchBtn?.addEventListener('click', doSearch);
+      searchInput?.addEventListener('keypress', (e) => { if (e.key === 'Enter') doSearch(); });
+
+      // Admin link
+      const adminLink = document.getElementById('admin-link');
+      if (adminLink) adminLink.href = '/pages/admin/dashboard.html';
+    });
+  </script>
+</body>
+</html>

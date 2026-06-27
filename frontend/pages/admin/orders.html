@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Orders — Admin — ShopVerse</title>
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+  <header class="header"><div class="container"><a href="/" class="logo">ShopVerse</a><nav class="nav-links" id="nav-links"><a href="/">Home</a></nav><div class="nav-icons"><button class="nav-icon theme-toggle" id="theme-toggle">🌙</button><div id="auth-nav" style="display:none;"></div><div class="user-menu" id="user-nav" style="display:none;"><button class="user-menu-btn" id="user-menu-btn">👤 <span id="user-name">Admin</span> ▾</button><div class="user-dropdown" id="user-dropdown"><a href="/pages/profile.html">👤 My Profile</a><a href="/pages/admin/dashboard.html" id="admin-link">⚙️ Admin Panel</a><div class="divider"></div><button id="logout-btn">🚪 Logout</button></div></div></div></div></header>
+
+  <main class="admin-page">
+    <div class="container">
+      <div class="admin-layout">
+        <aside class="admin-sidebar">
+          <h3>Admin Panel</h3>
+          <nav class="admin-nav">
+            <a href="/pages/admin/dashboard.html"><span class="icon">📊</span> Dashboard</a>
+            <a href="/pages/admin/products.html"><span class="icon">📦</span> Products</a>
+            <a href="/pages/admin/users.html"><span class="icon">👥</span> Users</a>
+            <a href="/pages/admin/orders.html" class="active"><span class="icon">🛒</span> Orders</a>
+          </nav>
+        </aside>
+
+        <div class="admin-content">
+          <div class="admin-content-header"><h1>Orders</h1></div>
+          <div class="admin-table-container">
+            <div class="admin-table-toolbar">
+              <div class="admin-table-search"><input type="text" id="order-search" placeholder="🔍 Search by order ID..."></div>
+              <select class="sort-select" id="status-filter">
+                <option value="">All Statuses</option>
+                <option value="Pending">Pending</option>
+                <option value="Processing">Processing</option>
+                <option value="Shipped">Shipped</option>
+                <option value="Delivered">Delivered</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+            </div>
+            <div id="orders-table"><div class="page-loader"><div class="spinner"></div><p>Loading...</p></div></div>
+          </div>
+          <div id="orders-pagination" class="mt-lg"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Order Status Modal -->
+  <div class="modal-overlay" id="order-modal">
+    <div class="modal" style="max-width:450px;">
+      <div class="modal-header"><h3>Update Order Status</h3><button class="modal-close" id="modal-close">✕</button></div>
+      <div class="modal-body">
+        <form id="order-form">
+          <p class="mb-md"><strong>Order:</strong> <span id="o-display-id"></span></p>
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select class="form-select" id="o-status">
+              <option value="Pending">Pending</option>
+              <option value="Processing">Processing</option>
+              <option value="Shipped">Shipped</option>
+              <option value="Delivered">Delivered</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </div>
+          <input type="hidden" id="o-id">
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="modal-cancel">Cancel</button>
+            <button type="submit" class="btn btn-primary">Update Status</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/js/main.js"></script>
+  <script type="module">
+    import { adminGetOrders, adminUpdateOrder, adminDeleteOrder } from '/js/admin/admin.js';
+    import { isAdmin } from '/js/auth/auth.js';
+    import { formatPrice, formatDate, debounce, renderPagination } from '/js/utils/helpers.js';
+    import { showToast } from '/js/utils/toast.js';
+    import { confirmDialog } from '/js/utils/modal.js';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!isAdmin()) { window.location.href = '/'; return; }
+
+      const tableEl = document.getElementById('orders-table');
+      const paginationEl = document.getElementById('orders-pagination');
+      const modal = document.getElementById('order-modal');
+      let currentPage = 1, statusFilter = '';
+
+      const loadOrders = async () => {
+        try {
+          const params = { page: currentPage };
+          if (statusFilter) params.status = statusFilter;
+          const data = await adminGetOrders(params);
+          const orders = data.data;
+
+          if (!orders || orders.length === 0) {
+            tableEl.innerHTML = '<p class="text-center text-muted p-xl">No orders found</p>';
+            return;
+          }
+
+          tableEl.innerHTML = `
+            <table class="admin-table">
+              <thead><tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+              <tbody>
+                ${orders.map((o) => `
+                  <tr>
+                    <td>#${o._id.slice(-8).toUpperCase()}</td>
+                    <td>${o.user?.name || 'N/A'}</td>
+                    <td>${o.products?.length || 0}</td>
+                    <td>${formatPrice(o.totalAmount)}</td>
+                    <td>${o.paymentMethod}</td>
+                    <td><span class="order-status ${o.status.toLowerCase()}">${o.status}</span></td>
+                    <td>${formatDate(o.createdAt)}</td>
+                    <td class="actions">
+                      <button class="edit-btn" data-id="${o._id}" data-status="${o.status}" title="Update Status">✏️</button>
+                      <button class="delete-btn" data-id="${o._id}" title="Delete">🗑️</button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          `;
+
+          paginationEl.innerHTML = data.pagination ? renderPagination(data.pagination) : '';
+
+          tableEl.querySelectorAll('.edit-btn').forEach((btn) => {
+            btn.addEventListener('click', () => {
+              document.getElementById('o-id').value = btn.dataset.id;
+              document.getElementById('o-display-id').textContent = `#${btn.dataset.id.slice(-8).toUpperCase()}`;
+              document.getElementById('o-status').value = btn.dataset.status;
+              modal.classList.add('active');
+            });
+          });
+
+          tableEl.querySelectorAll('.delete-btn').forEach((btn) => {
+            btn.addEventListener('click', async () => {
+              const ok = await confirmDialog('Delete this order?');
+              if (ok) {
+                try { await adminDeleteOrder(btn.dataset.id); showToast('Order deleted', 'success'); loadOrders(); }
+                catch (err) { showToast(err.message || 'Delete failed', 'error'); }
+              }
+            });
+          });
+
+          paginationEl.querySelectorAll('.pagination-btn').forEach((btn) => {
+            btn.addEventListener('click', () => { if (btn.dataset.page) { currentPage = parseInt(btn.dataset.page); loadOrders(); } });
+          });
+        } catch { tableEl.innerHTML = '<p class="text-center text-muted">Failed to load orders</p>'; }
+      };
+
+      document.getElementById('status-filter').addEventListener('change', (e) => {
+        statusFilter = e.target.value; currentPage = 1; loadOrders();
+      });
+
+      const closeModal = () => { modal.classList.remove('active'); };
+      document.getElementById('modal-close').addEventListener('click', closeModal);
+      document.getElementById('modal-cancel').addEventListener('click', closeModal);
+      modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+      document.getElementById('order-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+          await adminUpdateOrder(document.getElementById('o-id').value, {
+            status: document.getElementById('o-status').value,
+          });
+          showToast('Order status updated!', 'success');
+          closeModal();
+          loadOrders();
+        } catch (err) { showToast(err.message || 'Update failed', 'error'); }
+      });
+
+      loadOrders();
+    });
+  </script>
+</body>
+</html>

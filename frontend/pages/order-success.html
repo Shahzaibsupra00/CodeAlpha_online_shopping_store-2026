@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Placed — ShopVerse</title>
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+  <header class="header"><div class="container"><a href="/" class="logo">ShopVerse</a><nav class="nav-links" id="nav-links"><a href="/">Home</a><a href="/pages/products.html">Products</a></nav><div class="nav-icons"><button class="nav-icon theme-toggle" id="theme-toggle">🌙</button><a href="/pages/cart.html" class="nav-icon">🛒<span class="badge" id="cart-count" style="display:none;">0</span></a><div id="auth-nav" style="display:none;"></div><div class="user-menu" id="user-nav" style="display:none;"><button class="user-menu-btn" id="user-menu-btn">👤 <span id="user-name">User</span> ▾</button><div class="user-dropdown" id="user-dropdown"><a href="/pages/profile.html">👤 My Profile</a><a href="/pages/orders.html">📦 My Orders</a><a href="/pages/admin/dashboard.html" id="admin-link" style="display:none;">⚙️ Admin Panel</a><div class="divider"></div><button id="logout-btn">🚪 Logout</button></div></div></div></div></header>
+
+  <main>
+    <div class="container">
+      <div class="order-success">
+        <div class="success-icon">✓</div>
+        <h1>Order Placed Successfully! 🎉</h1>
+        <p>Thank you for your purchase. Your order has been confirmed and is being processed.</p>
+        <div class="order-id" id="order-id"></div>
+        <div class="actions">
+          <a href="/pages/orders.html" class="btn btn-primary">View My Orders</a>
+          <a href="/pages/products.html" class="btn btn-outline">Continue Shopping</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer"><div class="container"><div class="footer-bottom"><span>© 2025 ShopVerse. All rights reserved.</span></div></div></footer>
+  <script type="module" src="/js/main.js"></script>
+  <script type="module">
+    import { getQueryParam } from '/js/utils/helpers.js';
+    document.addEventListener('DOMContentLoaded', () => {
+      const orderId = getQueryParam('id');
+      const el = document.getElementById('order-id');
+      if (el && orderId) el.textContent = `Order ID: #${orderId.slice(-8).toUpperCase()}`;
+    });
+  </script>
+</body>
+</html>
